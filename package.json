@@ -3,13 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "devDependencies": {
+    "flow-bin": "^0.79.1",
     "react-scripts": "0.9.5",
     "serve": "^7.0.0"
   },
   "dependencies": {
     "@material-ui/core": "^1.5.0",
-    "react": "^15.4.0",
-    "react-dom": "^15.4.0",
+    "query-string": "^6.1.0",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0",
     "react-router": "^4.0.0",
     "react-router-dom": "^4.0.0",
     "styled-components": "^3.4.2"
