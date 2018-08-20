@@ -119,14 +119,14 @@ export const getStateFromQuery = (data: String) => {
   ] = data.split(",");
 
   metric = !!Number(metric);
-  console.log(metric);
 
   const base = [
     convertGendertoBase((gender: GenderType)),
     convertBodyFatPercentToBase(gender, Number(bodyFatPercentage)),
     convertHeightToBase(gender, Number(weight), metric),
     convertMuscleMassToBase(muscleMassAttr),
-    convertAgeToBase(Number(age))
+    convertAgeToBase(Number(age)),
+    convertStepsToBase(Number(stepsPerDay))
   ].reduce(sum, 0);
 
   return {
@@ -140,6 +140,6 @@ export const getStateFromQuery = (data: String) => {
     stepsPerDay,
     metric,
     base,
-    bmr: Math.round(base * (metric ? Number(weight) : Number(weight) / 2.2))
+    bmr: base * Number(weight)
   };
 };

@@ -55,7 +55,7 @@ class AppBase extends React.Component {
           {state => (
             <AppContainer>
               <Button variant="contained" color="primary">
-                {state.bmr}
+                {`${state.bmr} ${state.base}`}
               </Button>
             </AppContainer>
           )}
