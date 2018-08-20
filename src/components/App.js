@@ -1,6 +1,5 @@
 import React from "react";
 import styled from "styled-components";
-import queryString from "query-string";
 import { getStateFromQuery, stateToQueryString } from "../utils/StateUtils";
 
 import TextField from "@material-ui/core/TextField";
@@ -119,8 +118,8 @@ export class StateProvider extends React.Component {
   };
 
   static getDerivedStateFromProps = (props, state) => {
-    const { data } = queryString.parse(location.search);
-    return getStateFromQuery(data);
+    // Super hacky way of grabbing the query string without needing another lib
+    return getStateFromQuery(location.search.substring(6));
   };
 
   render() {
@@ -266,7 +265,9 @@ class App extends React.Component {
                 label="Activity Level (Steps per day)"
               />
               <h1>
-                Base Metabolic Rate: {Math.round(state.base * state.weight)}
+                Base Metabolic Rate: {Math.round(state.bmr)}
+                Cut: {Math.round((state.bmr - 500) * 0.925)} /{" "}
+                {Math.round((state.bmr - 500) * 1.0925)}
               </h1>
             </AppContainer>
           )}

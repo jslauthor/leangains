@@ -160,7 +160,7 @@ export const getStateFromQuery: string => QueryState = (data: string) => {
   ].reduce(sum, 0);
 
   return {
-    name,
+    name: decodeURI(name),
     gender,
     weight: Number(weight),
     height: Number(height),
