@@ -1,4 +1,7 @@
-import React from "react";
+// @flow
+import type { QueryState, GenderType, MassType } from "../utils/StateUtils";
+
+import * as React from "react";
 import styled from "styled-components";
 import { getStateFromQuery, stateToQueryString } from "../utils/StateUtils";
 
@@ -12,57 +15,59 @@ const KG_MULTIPLE = 2.2;
  * Actions
  */
 
-const STANDARD_CHANGED: string = "STANDARD_CHANGED";
+type Action =
+  | { type: "STANDARD_CHANGED", payload: boolean }
+  | { type: "GENDER_CHANGED", payload: GenderType }
+  | { type: "NAME_CHANGED", payload: string }
+  | { type: "WEIGHT_CHANGED", payload: number }
+  | { type: "AGE_CHANGED", payload: number }
+  | { type: "HEIGHT_CHANGED", payload: number }
+  | { type: "BODY_FAT_CHANGED", payload: number }
+  | { type: "MUSCLE_MASS_CHANGED", payload: MassType }
+  | { type: "STEPS_PER_DAY_CHANGED", payload: number };
+
 const standardChanged = (metric: number) => ({
-  type: STANDARD_CHANGED,
+  type: "STANDARD_CHANGED",
   payload: metric === 0 ? false : true
 });
 
-const GENDER_CHANGED: string = "GENDER_CHANGED";
 const genderChanged = (gender: string) => ({
-  type: GENDER_CHANGED,
+  type: "GENDER_CHANGED",
   payload: gender
 });
 
-const NAME_CHANGED: string = "NAME_CHANGED";
 const nameChanged = (name: string) => ({
-  type: NAME_CHANGED,
+  type: "NAME_CHANGED",
   payload: name
 });
 
-const WEIGHT_CHANGED: string = "WEIGHT_CHANGED";
 const weightChanged = (metric: boolean, weight: number) => ({
-  type: WEIGHT_CHANGED,
+  type: "WEIGHT_CHANGED",
   payload: metric ? weight : weight / KG_MULTIPLE
 });
 
-const AGE_CHANGED: string = "AGE_CHANGED";
 const ageChanged = (age: number) => ({
-  type: AGE_CHANGED,
+  type: "AGE_CHANGED",
   payload: age
 });
 
-const HEIGHT_CHANGED: string = "HEIGHT_CHANGED";
 const heightChanged = (metric: boolean, height: number) => ({
-  type: HEIGHT_CHANGED,
+  type: "HEIGHT_CHANGED",
   payload: metric ? height : height * CM_MULTIPLE
 });
 
-const BODY_FAT_CHANGED: string = "BODY_FAT_CHANGED";
 const bodyFatChanged = (bodyFatPercentage: number) => ({
-  type: BODY_FAT_CHANGED,
+  type: "BODY_FAT_CHANGED",
   payload: bodyFatPercentage
 });
 
-const MUSCLE_MASS_CHANGED: string = "MUSCLE_MASS_CHANGED";
-const muscleMassChanged = (muscleMass: number) => ({
-  type: MUSCLE_MASS_CHANGED,
+const muscleMassChanged = (muscleMass: MassType) => ({
+  type: "MUSCLE_MASS_CHANGED",
   payload: muscleMass
 });
 
-const STEPS_PER_DAY_CHANGED: string = "STEPS_PER_DAY_CHANGED";
 const stepsPerDayChanged = (steps: number) => ({
-  type: STEPS_PER_DAY_CHANGED,
+  type: "STEPS_PER_DAY_CHANGED",
   payload: steps
 });
 
@@ -72,8 +77,8 @@ const stepsPerDayChanged = (steps: number) => ({
  * to enable easy link sharing.
  */
 
-const Context = React.createContext();
-const saveQueryParams = state => {
+const Context: Object = React.createContext();
+const saveQueryParams = (state: QueryState) => {
   window.history.pushState(
     {},
     document.title,
@@ -81,43 +86,66 @@ const saveQueryParams = state => {
   );
 };
 
-const reducer = (state, action) => {
+const reducer: (QueryState, Action) => QueryState = (
+  state: QueryState,
+  action: Action
+) => {
   switch (action.type) {
-    case STANDARD_CHANGED:
+    case "STANDARD_CHANGED":
       return { ...state, metric: action.payload };
-    case GENDER_CHANGED:
+    case "GENDER_CHANGED":
       return { ...state, gender: action.payload };
-    case NAME_CHANGED:
+    case "NAME_CHANGED":
       return { ...state, name: action.payload };
-    case WEIGHT_CHANGED:
+    case "WEIGHT_CHANGED":
       return { ...state, weight: action.payload };
-    case AGE_CHANGED:
+    case "AGE_CHANGED":
       return { ...state, age: action.payload };
-    case HEIGHT_CHANGED:
+    case "HEIGHT_CHANGED":
       return { ...state, height: action.payload };
-    case BODY_FAT_CHANGED:
+    case "BODY_FAT_CHANGED":
       return { ...state, bodyFatPercentage: action.payload };
-    case MUSCLE_MASS_CHANGED:
+    case "MUSCLE_MASS_CHANGED":
       return { ...state, muscleMassAttr: action.payload };
-    case STEPS_PER_DAY_CHANGED:
+    case "STEPS_PER_DAY_CHANGED":
       return { ...state, stepsPerDay: action.payload };
     default:
-      return;
+      return state;
   }
 };
 
-export class StateProvider extends React.Component {
+type StateProviderProps = {
+  children?: React.Node
+};
+type StateProviderState = QueryState & {
+  dispatch: Action => void
+};
+export class StateProvider extends React.Component<
+  StateProviderProps,
+  StateProviderState
+> {
   state = {
-    dispatch: action => {
-      this.setState(state => {
-        const newState = reducer(state, action);
+    name: "",
+    gender: "M",
+    weight: 0,
+    height: 0,
+    bodyFatPercentage: 0,
+    muscleMassAttr: "NA",
+    age: 0,
+    stepsPerDay: 0,
+    metric: true,
+    base: 0,
+    bmr: 0,
+    dispatch: (action: Action) => {
+      this.setState((state: QueryState) => {
+        const newState: QueryState = reducer(state, action);
         saveQueryParams(newState);
         return newState; // force refresh, gross
       });
     }
   };
 
-  static getDerivedStateFromProps = (props, state) => {
+  static getDerivedStateFromProps = (props: {}, state: StateProviderState) => {
     // Super hacky way of grabbing the query string without needing another lib
     return getStateFromQuery(location.search.substring(6));
   };
@@ -147,12 +175,12 @@ const getDisplayHeight = (metric, height) =>
 const getDisplayWeight = (metric, weight) =>
   nearest(metric ? weight : weight * KG_MULTIPLE);
 
-class App extends React.Component {
+class App extends React.Component<{}, {}> {
   render() {
     return (
-      <StateProvider location={this.props.location}>
+      <StateProvider>
         <Context.Consumer>
-          {state => (
+          {(state: StateProviderState) => (
             <AppContainer>
               <TextField
                 select

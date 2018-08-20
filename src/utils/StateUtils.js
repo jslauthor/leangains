@@ -1,6 +1,6 @@
 // @flow
-type GenderType = "M" | "F" | string;
-type MassType = "M" | "VM" | string;
+export type GenderType = "M" | "F" | string;
+export type MassType = "M" | "VM" | string;
 type Range = { start: number, end: number };
 
 export type QueryState = {
