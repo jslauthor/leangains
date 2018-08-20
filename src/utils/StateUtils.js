@@ -12,7 +12,9 @@ export type QueryState = {
   muscleMassAttr: MassType,
   age: number,
   stepsPerDay: number,
-  metric: boolean
+  metric: boolean,
+  base: number,
+  bmr: number
 };
 
 const convertGendertoBase: GenderType => number = (gender: GenderType) => {
@@ -56,13 +58,12 @@ const convertHeightToBase: (GenderType, number, boolean) => number = (
   height: number,
   metric: boolean
 ) => {
-  const baseHeight = metric ? height : height * 2.54;
   const short = gender === "M" ? 167 : 153;
   const tall = gender === "M" ? 185 : 170;
 
-  if (baseHeight > tall) {
+  if (height > tall) {
     return 1;
-  } else if (baseHeight < short) {
+  } else if (height < short) {
     return -1;
   }
 
@@ -105,7 +106,36 @@ const sum = (total, value) => total + value;
 
 // localhost:3000/?data=Leonard%20Souza,M,200,182.88,13,M,38,6600,1
 
-export const getStateFromQuery = (data: String) => {
+export const stateToQueryString: QueryState => string = ({
+  name,
+  gender,
+  weight,
+  height,
+  bodyFatPercentage,
+  muscleMassAttr,
+  age,
+  stepsPerDay,
+  metric,
+  base,
+  bmr
+}) => {
+  const metricBit = metric ? 1 : 0;
+  return [
+    name,
+    gender,
+    weight,
+    height,
+    bodyFatPercentage,
+    muscleMassAttr,
+    age,
+    stepsPerDay,
+    metricBit
+  ]
+    .map(String)
+    .join(",");
+};
+
+export const getStateFromQuery: string => QueryState = (data: string) => {
   let [
     name,
     gender = "M",
@@ -123,7 +153,7 @@ export const getStateFromQuery = (data: String) => {
   const base = [
     convertGendertoBase((gender: GenderType)),
     convertBodyFatPercentToBase(gender, Number(bodyFatPercentage)),
-    convertHeightToBase(gender, Number(weight), metric),
+    convertHeightToBase(gender, Number(height), metric),
     convertMuscleMassToBase(muscleMassAttr),
     convertAgeToBase(Number(age)),
     convertStepsToBase(Number(stepsPerDay))
@@ -132,12 +162,12 @@ export const getStateFromQuery = (data: String) => {
   return {
     name,
     gender,
-    weight,
-    height,
-    bodyFatPercentage,
+    weight: Number(weight),
+    height: Number(height),
+    bodyFatPercentage: Number(bodyFatPercentage),
     muscleMassAttr,
-    age,
-    stepsPerDay,
+    age: Number(age),
+    stepsPerDay: Number(stepsPerDay),
     metric,
     base,
     bmr: base * Number(weight)
