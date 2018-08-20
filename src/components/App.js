@@ -174,7 +174,12 @@ const getDisplayHeight = (metric, height) =>
   nearest(metric ? height : height / CM_MULTIPLE);
 const getDisplayWeight = (metric, weight) =>
   nearest(metric ? weight : weight * KG_MULTIPLE);
-
+const formatValue = (value: number, defaultValue: string | null = null) => {
+  if (isNaN(value) || value === 0) {
+    return defaultValue || "";
+  }
+  return String(value);
+};
 class App extends React.Component<{}, {}> {
   render() {
     return (
@@ -221,7 +226,7 @@ class App extends React.Component<{}, {}> {
                 ))}
               </TextField>
               <TextField
-                placeholder="Name"
+                placeholder="Enter your name"
                 value={state.name}
                 label="Name"
                 onChange={event =>
@@ -229,8 +234,12 @@ class App extends React.Component<{}, {}> {
                 }
               />
               <TextField
-                placeholder="Weight"
-                value={getDisplayWeight(state.metric, state.weight)}
+                placeholder={`Enter your weight in ${
+                  state.metric ? "kg" : "lbs"
+                }`}
+                value={formatValue(
+                  getDisplayWeight(state.metric, state.weight)
+                )}
                 label="Weight"
                 onChange={event =>
                   state.dispatch(
@@ -239,8 +248,8 @@ class App extends React.Component<{}, {}> {
                 }
               />
               <TextField
-                placeholder="Age"
-                value={state.age}
+                placeholder="Enter your age"
+                value={formatValue(state.age)}
                 label="Age"
                 onChange={event =>
                   state.dispatch(ageChanged(event.target.value))
@@ -248,7 +257,9 @@ class App extends React.Component<{}, {}> {
               />
               <TextField
                 placeholder="Enter your height"
-                value={getDisplayHeight(state.metric, state.height)}
+                value={formatValue(
+                  getDisplayHeight(state.metric, state.height)
+                )}
                 label={`Height ${state.metric ? "(cm)" : "(in)"}`}
                 onChange={event =>
                   state.dispatch(
@@ -258,7 +269,7 @@ class App extends React.Component<{}, {}> {
               />
               <TextField
                 placeholder="Enter your body fat percentage"
-                value={state.bodyFatPercentage}
+                value={formatValue(state.bodyFatPercentage)}
                 label="Body Fat Percentage"
                 onChange={event =>
                   state.dispatch(bodyFatChanged(event.target.value))
@@ -285,8 +296,8 @@ class App extends React.Component<{}, {}> {
                 ))}
               </TextField>
               <TextField
-                placeholder="Enter the number of average daily steps"
-                value={state.stepsPerDay}
+                placeholder="Enter your number of average daily steps"
+                value={formatValue(state.stepsPerDay, "0")}
                 onChange={event =>
                   state.dispatch(stepsPerDayChanged(event.target.value))
                 }

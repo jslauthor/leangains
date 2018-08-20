@@ -131,6 +131,7 @@ export const stateToQueryString: QueryState => string = ({
     stepsPerDay,
     metricBit
   ]
+    .map(val => (typeof val === "number" && isNaN(val) ? "" : val))
     .map(String)
     .join(",");
 };
