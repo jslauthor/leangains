@@ -5,8 +5,18 @@ import * as React from "react";
 import styled from "styled-components";
 import { getStateFromQuery, stateToQueryString } from "../utils/StateUtils";
 
+import MacrosPanel from "./MacrosPanel";
+import { CheckBox, CheckBoxOutlineBlank } from "@material-ui/icons";
 import TextField from "@material-ui/core/TextField";
 import MenuItem from "@material-ui/core/MenuItem";
+import Typography from "@material-ui/core/Typography";
+import Radio from "@material-ui/core/Radio";
+import RadioGroup from "@material-ui/core/RadioGroup";
+import Paper from "@material-ui/core/Paper";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Divider from "@material-ui/core/Divider";
+
+// import grey from "@material-ui/core/colors/grey";
 
 const CM_MULTIPLE = 2.54;
 const KG_MULTIPLE = 2.2;
@@ -164,8 +174,54 @@ export class StateProvider extends React.Component<
  */
 
 const AppContainer = styled.div`
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   margin: 20px;
+  position: relative;
+  max-width: 600px;
+  width: 100%;
+`;
+
+const HeaderContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const MeasurementRadioGroup = styled(RadioGroup)`
+  display: flex;
+  flex-direction: row !important;
+`;
+
+const InputContainer = styled(Paper)`
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1.8fr 1.2fr;
+  grid-template-areas:
+    "name weight"
+    "gender age"
+    "muscle height"
+    "bmr fat"
+    "bmr activity";
+  grid-gap: 20px;
+  margin-bottom: 10px;
+`;
+
+const BmrContainer = styled.div`
+  grid-area: bmr;
+  display: flex;
+  flex-direction: column;
+
+  .divider {
+    margin-bottom: 10px;
+  }
+`;
+
+const BmrItem = styled(Typography)`
+  display: flex !important;
+  align-items: center;
+  flex-direction: row;
 `;
 
 const nearest = value => Math.round(value * 100) / 100;
@@ -180,136 +236,250 @@ const formatValue = (value: number, defaultValue: string | null = null) => {
   }
   return String(value);
 };
-class App extends React.Component<{}, {}> {
+
+const requiredBmrKeys = {
+  weight: "Weight",
+  age: "Age",
+  height: "Height",
+  bodyFatPercentage: "Body Fat Percentage",
+  stepsPerDay: "Activity Level"
+};
+
+const checkboxStyle = {
+  fontSize: 16,
+  marginRight: 5
+};
+
+const getMissingKeys = state =>
+  Object.keys(requiredBmrKeys).filter(
+    key => formatValue(state[key]).length === 0
+  );
+
+const BmrDisplay = ({ state }) => {
+  const missingKeys = getMissingKeys(state);
+  const messages = Object.keys(requiredBmrKeys).reduce((messages, key) => {
+    let icon = missingKeys.includes(key) ? (
+      <CheckBoxOutlineBlank style={checkboxStyle} />
+    ) : (
+      <CheckBox style={checkboxStyle} />
+    );
+    messages.push(
+      <BmrItem key={key} variant="body1">
+        {icon}
+        {`Provide your ${requiredBmrKeys[key]}`}
+      </BmrItem>
+    );
+    return messages;
+  }, []);
+
+  if (missingKeys.length === 0) {
+    return <BmrItem variant="display4">{Math.round(state.bmr)}</BmrItem>;
+  } else {
+    return messages;
+  }
+};
+
+type AppState = {
+  expansionPanelStates: Set<string>
+};
+
+// TODO: Include infomation tooltips that explain each
+class App extends React.Component<{}, AppState> {
+  state: AppState = {
+    expansionPanelStates: new Set(["cutPanel", "leangainsPanel"])
+  };
+
+  handleExpansionChange = (key: string) => (
+    event: SyntheticEvent<HTMLButtonElement>,
+    expanded: boolean
+  ) => {
+    const expansionPanelStates = new Set(this.state.expansionPanelStates);
+    expanded ? expansionPanelStates.add(key) : expansionPanelStates.delete(key);
+    this.setState({
+      expansionPanelStates
+    });
+  };
+
   render() {
     return (
       <StateProvider>
         <Context.Consumer>
-          {(state: StateProviderState) => (
-            <AppContainer>
-              <TextField
-                select
-                label="Metric or Imperial"
-                value={state.metric ? 1 : 0}
-                onChange={event =>
-                  state.dispatch(standardChanged(event.target.value))
-                }
-                helperText="Please select metric or imperial"
-                margin="normal"
-              >
-                {[
-                  { label: "Metric", value: 1 },
-                  { label: "Imperial", value: 0 }
-                ].map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                select
-                label="Sex"
-                value={state.gender}
-                onChange={event =>
-                  state.dispatch(genderChanged(event.target.value))
-                }
-                helperText="Select your closest biological sex."
-                margin="normal"
-              >
-                {[
-                  { label: "Male", value: "M" },
-                  { label: "Female", value: "F" }
-                ].map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                placeholder="Enter your name"
-                value={state.name}
-                label="Name"
-                onChange={event =>
-                  state.dispatch(nameChanged(event.target.value))
-                }
-              />
-              <TextField
-                placeholder={`Enter your weight in ${
-                  state.metric ? "kg" : "lbs"
-                }`}
-                value={formatValue(
-                  getDisplayWeight(state.metric, state.weight)
+          {(state: StateProviderState) => {
+            const showMacros = getMissingKeys(state).length === 0;
+            return (
+              <AppContainer>
+                <HeaderContainer>
+                  <Typography variant="headline" gutterBottom>
+                    Leangains Calculator
+                  </Typography>
+                  <MeasurementRadioGroup
+                    aria-label="MetricOrImperial"
+                    name="measureStandard"
+                    value={state.metric ? "1" : "0"}
+                    onChange={event =>
+                      state.dispatch(
+                        standardChanged(Number(event.target.value))
+                      )
+                    }
+                  >
+                    {[
+                      { label: "Metric", value: "1" },
+                      { label: "Imperial", value: "0" }
+                    ].map(option => (
+                      <FormControlLabel
+                        key={option.value}
+                        label={option.label}
+                        control={<Radio />}
+                        value={option.value}
+                      />
+                    ))}
+                  </MeasurementRadioGroup>
+                </HeaderContainer>
+                <InputContainer>
+                  <TextField
+                    style={{ gridArea: "name" }}
+                    placeholder="Enter your name"
+                    value={state.name}
+                    label="Name"
+                    onChange={event =>
+                      state.dispatch(nameChanged(event.target.value))
+                    }
+                  />
+                  <TextField
+                    style={{ gridArea: "gender" }}
+                    select
+                    label="Sex"
+                    value={state.gender}
+                    onChange={event =>
+                      state.dispatch(genderChanged(event.target.value))
+                    }
+                    helperText="Select your closest biological sex."
+                  >
+                    {[
+                      { label: "Male", value: "M" },
+                      { label: "Female", value: "F" }
+                    ].map(option => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <TextField
+                    style={{ gridArea: "weight" }}
+                    placeholder={`Enter your weight in ${
+                      state.metric ? "kg" : "lbs"
+                    }`}
+                    value={formatValue(
+                      getDisplayWeight(state.metric, state.weight)
+                    )}
+                    label="Weight"
+                    onChange={event =>
+                      state.dispatch(
+                        weightChanged(state.metric, event.target.value)
+                      )
+                    }
+                  />
+                  <TextField
+                    style={{ gridArea: "age" }}
+                    placeholder="Enter your age"
+                    value={formatValue(state.age)}
+                    label="Age"
+                    onChange={event =>
+                      state.dispatch(ageChanged(event.target.value))
+                    }
+                  />
+                  <TextField
+                    style={{ gridArea: "height" }}
+                    placeholder="Enter your height"
+                    value={formatValue(
+                      getDisplayHeight(state.metric, state.height)
+                    )}
+                    label={`Height ${state.metric ? "(cm)" : "(in)"}`}
+                    onChange={event =>
+                      state.dispatch(
+                        heightChanged(state.metric, event.target.value)
+                      )
+                    }
+                  />
+                  <TextField
+                    style={{ gridArea: "fat" }}
+                    placeholder="Enter your body fat percentage"
+                    value={formatValue(state.bodyFatPercentage)}
+                    label="Body Fat Percentage"
+                    onChange={event =>
+                      state.dispatch(bodyFatChanged(event.target.value))
+                    }
+                  />
+                  <TextField
+                    style={{ gridArea: "muscle" }}
+                    select
+                    label="Muscle Mass"
+                    value={state.muscleMassAttr}
+                    onChange={event =>
+                      state.dispatch(muscleMassChanged(event.target.value))
+                    }
+                    helperText="Select your muscle mass"
+                  >
+                    {[
+                      { label: "Average", value: "NA" },
+                      { label: "Muscular", value: "M" },
+                      { label: "Very Muscular", value: "VM" }
+                    ].map(option => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <TextField
+                    style={{ gridArea: "activity" }}
+                    placeholder="Enter your number of average daily steps"
+                    value={formatValue(state.stepsPerDay, "0")}
+                    onChange={event =>
+                      state.dispatch(stepsPerDayChanged(event.target.value))
+                    }
+                    label="Activity Level (Steps per day)"
+                  />
+                  <BmrContainer>
+                    <Divider className="divider" />
+                    <Typography variant="title">Maintenance Intake</Typography>
+                    <BmrDisplay state={state} />
+                    <Typography variant="caption">kcals</Typography>
+                  </BmrContainer>
+                </InputContainer>
+                <Typography variant="headline" gutterBottom>
+                  Macros
+                </Typography>
+
+                {showMacros && (
+                  <div>
+                    <MacrosPanel
+                      state={state}
+                      title={
+                        <span>
+                          Leangains Diet{" "}
+                          <Typography variant="caption">
+                            -500 kcal (standard)
+                          </Typography>
+                        </span>
+                      }
+                      macroAdjustment={0}
+                      onChange={this.handleExpansionChange("leangainsPanel")}
+                      expanded={this.state.expansionPanelStates.has(
+                        "leangainsPanel"
+                      )}
+                    />
+                    <MacrosPanel
+                      state={state}
+                      title="16:8 Macros"
+                      macroAdjustment={0}
+                      onChange={this.handleExpansionChange("cutPanel")}
+                      expanded={this.state.expansionPanelStates.has("cutPanel")}
+                    />
+                  </div>
                 )}
-                label="Weight"
-                onChange={event =>
-                  state.dispatch(
-                    weightChanged(state.metric, event.target.value)
-                  )
-                }
-              />
-              <TextField
-                placeholder="Enter your age"
-                value={formatValue(state.age)}
-                label="Age"
-                onChange={event =>
-                  state.dispatch(ageChanged(event.target.value))
-                }
-              />
-              <TextField
-                placeholder="Enter your height"
-                value={formatValue(
-                  getDisplayHeight(state.metric, state.height)
-                )}
-                label={`Height ${state.metric ? "(cm)" : "(in)"}`}
-                onChange={event =>
-                  state.dispatch(
-                    heightChanged(state.metric, event.target.value)
-                  )
-                }
-              />
-              <TextField
-                placeholder="Enter your body fat percentage"
-                value={formatValue(state.bodyFatPercentage)}
-                label="Body Fat Percentage"
-                onChange={event =>
-                  state.dispatch(bodyFatChanged(event.target.value))
-                }
-              />
-              <TextField
-                select
-                label="Muscle Mass"
-                value={state.muscleMassAttr}
-                onChange={event =>
-                  state.dispatch(muscleMassChanged(event.target.value))
-                }
-                helperText="Select your muscle mass"
-                margin="normal"
-              >
-                {[
-                  { label: "Average", value: "NA" },
-                  { label: "Muscular", value: "M" },
-                  { label: "Very Muscular", value: "VM" }
-                ].map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                placeholder="Enter your number of average daily steps"
-                value={formatValue(state.stepsPerDay, "0")}
-                onChange={event =>
-                  state.dispatch(stepsPerDayChanged(event.target.value))
-                }
-                label="Activity Level (Steps per day)"
-              />
-              <h1>
-                Base Metabolic Rate: {Math.round(state.bmr)}
-                Cut: {Math.round((state.bmr - 500) * 0.925)} /{" "}
-                {Math.round((state.bmr - 500) * 1.0925)}
-              </h1>
-            </AppContainer>
-          )}
+              </AppContainer>
+            );
+          }}
         </Context.Consumer>
       </StateProvider>
     );

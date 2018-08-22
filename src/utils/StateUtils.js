@@ -17,6 +17,20 @@ export type QueryState = {
   bmr: number
 };
 
+const nearest = value => Math.round(value * 100) / 100;
+
+export const getDefaultCaloricDeficit: GenderType => number = (
+  gender: GenderType
+) => {
+  switch (gender) {
+    case "F":
+      return 350;
+    case "M":
+    default:
+      return 500;
+  }
+};
+
 const convertGendertoBase: GenderType => number = (gender: GenderType) => {
   switch (gender) {
     case "F":
@@ -123,9 +137,9 @@ export const stateToQueryString: QueryState => string = ({
   return [
     name,
     gender,
-    weight,
-    height,
-    bodyFatPercentage,
+    nearest(weight),
+    nearest(height),
+    nearest(bodyFatPercentage),
     muscleMassAttr,
     age,
     stepsPerDay,
