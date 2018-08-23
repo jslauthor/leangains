@@ -205,7 +205,7 @@ const InputContainer = styled(Paper)`
     "bmr fat"
     "bmr activity";
   grid-gap: 20px;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 `;
 
 const BmrContainer = styled.div`
@@ -241,8 +241,7 @@ const requiredBmrKeys = {
   weight: "Weight",
   age: "Age",
   height: "Height",
-  bodyFatPercentage: "Body Fat Percentage",
-  stepsPerDay: "Activity Level"
+  bodyFatPercentage: "Body Fat Percentage"
 };
 
 const checkboxStyle = {
@@ -284,6 +283,8 @@ type AppState = {
 };
 
 // TODO: Include infomation tooltips that explain each
+// TODO: Allow decimals in number inputs
+// TODO: Create calendar with checkboxes for if they are training days
 class App extends React.Component<{}, AppState> {
   state: AppState = {
     expansionPanelStates: new Set(["cutPanel", "leangainsPanel"])
@@ -309,9 +310,16 @@ class App extends React.Component<{}, AppState> {
             return (
               <AppContainer>
                 <HeaderContainer>
-                  <Typography variant="headline" gutterBottom>
-                    Leangains Calculator
-                  </Typography>
+                  <div>
+                    {" "}
+                    <Typography variant="headline" gutterBottom>
+                      Leangains Calculator
+                    </Typography>
+                    <Typography variant="subheading" gutterBottom>
+                      Buy the book!
+                    </Typography>
+                  </div>
+
                   <MeasurementRadioGroup
                     aria-label="MetricOrImperial"
                     name="measureStandard"
@@ -446,23 +454,22 @@ class App extends React.Component<{}, AppState> {
                     <Typography variant="caption">kcals</Typography>
                   </BmrContainer>
                 </InputContainer>
-                <Typography variant="headline" gutterBottom>
-                  Macros
-                </Typography>
-
                 {showMacros && (
                   <div>
+                    <Typography variant="subheading" gutterBottom>
+                      Your macros
+                    </Typography>
                     <MacrosPanel
                       state={state}
                       title={
                         <span>
-                          Leangains Diet{" "}
-                          <Typography variant="caption">
-                            -500 kcal (standard)
-                          </Typography>
+                          Standard{" "}
+                          <Typography variant="caption">-500 kcal</Typography>
                         </span>
                       }
+                      kcalAdjustment={-500}
                       macroAdjustment={0}
+                      proteinPercent={60}
                       onChange={this.handleExpansionChange("leangainsPanel")}
                       expanded={this.state.expansionPanelStates.has(
                         "leangainsPanel"
@@ -470,8 +477,10 @@ class App extends React.Component<{}, AppState> {
                     />
                     <MacrosPanel
                       state={state}
-                      title="16:8 Macros"
+                      title="16:8 (Intermittent Fasting)"
+                      kcalAdjustment={-500}
                       macroAdjustment={0}
+                      proteinPercent={60}
                       onChange={this.handleExpansionChange("cutPanel")}
                       expanded={this.state.expansionPanelStates.has("cutPanel")}
                     />
