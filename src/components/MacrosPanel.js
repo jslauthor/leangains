@@ -5,6 +5,9 @@ import * as React from "react";
 import { PieChart, Pie, Cell } from "recharts";
 import styled from "styled-components";
 
+import "rc-slider/assets/index.css";
+import { Range } from "rc-slider";
+
 import Typography from "@material-ui/core/Typography";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import ExpansionPanel from "@material-ui/core/ExpansionPanel";
@@ -23,7 +26,8 @@ type ChartData = {
 type MacroChartProps = {
   data: Array<ChartData>,
   kcals: number,
-  title: string
+  title: string,
+  onMacroChange: (Array<number>) => void
 };
 
 type MacrosPanelProps = {
@@ -34,7 +38,9 @@ type MacrosPanelProps = {
   proteinPercent: number,
   carbsPercent: number,
   fatPercent: number,
-  kcalAdjustment: number
+  kcalAdjustment: number,
+  onRestMacroChange: (Array<number>) => void,
+  onTrainingMacroChange: (Array<number>) => void
 };
 
 const PROTEIN_COLOR = green[500];
@@ -81,7 +87,9 @@ const MacroLabelContainer = styled.div`
 `;
 const MacroLabelsContainer = styled(MacroLabelContainer)`
   justify-content: space-around;
+  margin-bottom: 25px;
 `;
+
 const getMacroColor = (type: "C" | "F" | "P") => {
   switch (type) {
     case "C":
@@ -93,6 +101,17 @@ const getMacroColor = (type: "C" | "F" | "P") => {
     default:
       return "white";
   }
+};
+
+const getRangeArray = (data: Array<ChartData>) => {
+  return data.reduce(
+    ({ values, sum }, { value }, index) => {
+      sum = sum + value;
+      values.push(sum);
+      return { values, sum };
+    },
+    { values: [], sum: 0 }
+  ).values;
 };
 
 const MacroType = styled.div`
@@ -122,7 +141,7 @@ const MacroLabel = ({
   </MacroLabelContainer>
 );
 
-const MacroChart = ({ data, title, kcals }: MacroChartProps) => (
+const MacroChart = ({ data, title, kcals, onMacroChange }: MacroChartProps) => (
   <MacroContainer>
     <Typography variant="subheading">{title}</Typography>
     <PieChart width={250} height={120}>
@@ -160,6 +179,19 @@ const MacroChart = ({ data, title, kcals }: MacroChartProps) => (
         />
       ))}
     </MacroLabelsContainer>
+    <Range
+      value={getRangeArray(data)}
+      count={2}
+      allowCross={false}
+      onChange={onMacroChange}
+      trackStyle={[
+        { backgroundColor: CARB_COLOR },
+        { backgroundColor: FAT_COLOR }
+      ]}
+      handleStyle={[{}, {}, { display: "none" }]}
+      railStyle={{ backgroundColor: PROTEIN_COLOR }}
+    />
+    <Typography variant="caption">Adjust your macro ratio</Typography>
   </MacroContainer>
 );
 
@@ -171,7 +203,9 @@ const MacrosPanel = ({
   proteinPercent = 60,
   carbsPercent = 25,
   fatPercent = 25,
-  kcalAdjustment
+  kcalAdjustment,
+  onRestMacroChange,
+  onTrainingMacroChange
 }: MacrosPanelProps) => {
   const targetKcals = state.bmr + kcalAdjustment;
   return (
@@ -182,6 +216,7 @@ const MacrosPanel = ({
       <ExpansionPanelDetails>
         <MacroChartsContainer>
           <MacroChart
+            onMacroChange={onRestMacroChange}
             title="Rest Day"
             kcals={Math.round(targetKcals * 0.925)}
             data={[
@@ -191,6 +226,7 @@ const MacrosPanel = ({
             ]}
           />
           <MacroChart
+            onMacroChange={onTrainingMacroChange}
             title="Training Day"
             kcals={Math.round(targetKcals * 1.0925)}
             data={[
