@@ -321,7 +321,7 @@ type AppState = {
 // TODO: Include infomation tooltips that explain each
 // TODO: Allow decimals in number inputs
 // TODO: Create calendar with checkboxes for if they are training days
-// TODO: Add rest/training multipliers (1/1 for standard, 1.0925, .925 for training)
+// TODO: Create different defaults for macros
 // TODO: Add kcal adjustment: 0, bulk, cut, for training days
 
 class App extends React.Component<{}, AppState> {
@@ -507,6 +507,8 @@ class App extends React.Component<{}, AppState> {
                           </Typography>
                         </span>
                       }
+                      restDayMultiplier={1}
+                      trainingDayMultiplier={1}
                       kcalAdjustment={getDefaultCaloricAdjustment(state.gender)}
                       macroPercents={[
                         state.macroPercents[0],
@@ -526,6 +528,8 @@ class App extends React.Component<{}, AppState> {
                     <MacrosPanel
                       state={state}
                       title="16:8 (Intermittent Fasting)"
+                      restDayMultiplier={0.925}
+                      trainingDayMultiplier={1.0925}
                       kcalAdjustment={0}
                       macroPercents={[
                         state.macroPercents[2],

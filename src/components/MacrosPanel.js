@@ -35,10 +35,12 @@ type MacrosPanelProps = {
   expanded: boolean,
   onChange: (SyntheticEvent<HTMLButtonElement>, boolean) => void,
   title: React.Node,
-  macroPercents: Array<Macros>, // P, C, F
+  macroPercents: Array<Macros>, // Order: Protein, Carbs
   kcalAdjustment: number,
   onRestMacroChange: Macros => void,
-  onTrainingMacroChange: Macros => void
+  onTrainingMacroChange: Macros => void,
+  restDayMultiplier: number,
+  trainingDayMultiplier: number
 };
 
 const PROTEIN_COLOR = green[500];
@@ -242,7 +244,9 @@ const MacrosPanel = ({
   macroPercents = [[60, 25], [60, 25]],
   kcalAdjustment,
   onRestMacroChange,
-  onTrainingMacroChange
+  onTrainingMacroChange,
+  restDayMultiplier = 1,
+  trainingDayMultiplier = 1
 }: MacrosPanelProps) => {
   const targetKcals = state.bmr + kcalAdjustment;
   return (
@@ -255,7 +259,7 @@ const MacrosPanel = ({
           <MacroChart
             onMacroChange={onRestMacroChange}
             title="Rest Day"
-            kcals={Math.round(targetKcals * 0.925)}
+            kcals={Math.round(targetKcals * restDayMultiplier)}
             data={[
               { name: "Protein", value: macroPercents[0][0] },
               { name: "Carbs", value: macroPercents[0][1] },
@@ -268,7 +272,7 @@ const MacrosPanel = ({
           <MacroChart
             onMacroChange={onTrainingMacroChange}
             title="Training Day"
-            kcals={Math.round(targetKcals * 1.0925)}
+            kcals={Math.round(targetKcals * trainingDayMultiplier)}
             data={[
               { name: "Protein", value: macroPercents[1][0] },
               { name: "Carbs", value: macroPercents[1][1] },
