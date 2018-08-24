@@ -2,7 +2,7 @@
 import type { QueryState, Macros } from "../utils/StateUtils";
 
 import * as React from "react";
-import { PieChart, Pie, Cell } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import styled from "styled-components";
 
 import "rc-slider/assets/index.css";
@@ -60,13 +60,16 @@ const getGramValue = (type: "C" | "F" | "P") => {
 
 const MacroChartsContainer = styled.div`
   display: flex;
-  justify-content: space-around;
+  justify-content: space-evenly;
   width: 100%;
+  position: relative;
 `;
 
 const MacroContainer = styled.div`
   display: flex;
   flex-direction: column;
+  width: 45%;
+  position: relative;
 `;
 
 const MacroKcalContainer = styled.div`
@@ -139,25 +142,64 @@ const MacroLabel = ({
   </MacroLabelContainer>
 );
 
+const RADIAN = Math.PI / 180;
+const renderLabel = ({
+  cx,
+  cy,
+  midAngle,
+  innerRadius,
+  outerRadius,
+  startAngle,
+  endAngle,
+  fill,
+  payload,
+  percent,
+  value
+}) => {
+  const sin = Math.sin(-RADIAN * midAngle);
+  const cos = Math.cos(-RADIAN * midAngle);
+  const tx = cx + (outerRadius + 5) * cos;
+  const ty = cy + (outerRadius + 5) * sin;
+  const textAnchor = cos >= 0 ? "start" : "end";
+
+  return (
+    <g>
+      <text
+        fill={fill}
+        textAnchor={textAnchor}
+        className="recharts-pie-label-text"
+        x={tx}
+        y={ty}
+      >{`${(percent * 100).toFixed(0)}%`}</text>
+    </g>
+  );
+};
+
 const MacroChart = ({ data, title, kcals, onMacroChange }: MacroChartProps) => (
   <MacroContainer>
     <Typography variant="subheading">{title}</Typography>
-    <PieChart width={250} height={120}>
-      <Pie
-        cy={100}
-        data={data}
-        dataKey="value"
-        innerRadius={60}
-        outerRadius={80}
-        paddingAngle={2}
-        startAngle={180}
-        endAngle={0}
-      >
-        {data.map((entry, index) => (
-          <Cell key={index} fill={COLORS[index % COLORS.length]} />
-        ))}
-      </Pie>
-    </PieChart>
+    <ResponsiveContainer width="100%" height={120}>
+      <PieChart>
+        <Pie
+          cx="50%"
+          cy={100}
+          data={data}
+          dataKey="value"
+          innerRadius={60}
+          outerRadius={80}
+          startAngle={180}
+          endAngle={0}
+          label={renderLabel}
+          labelLine={false}
+          isAnimationActive={false}
+        >
+          {data.map((entry, index) => (
+            <Cell key={index} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+      </PieChart>
+    </ResponsiveContainer>
+
     <MacroKcalContainer>
       <div>
         <Typography variant="display1">{kcals}</Typography>
@@ -179,7 +221,6 @@ const MacroChart = ({ data, title, kcals, onMacroChange }: MacroChartProps) => (
     </MacroLabelsContainer>
     <Range
       value={getRangeArray(data)}
-      count={3}
       allowCross={false}
       onChange={onMacroChange}
       trackStyle={[
@@ -220,7 +261,7 @@ const MacrosPanel = ({
               { name: "Carbs", value: macroPercents[0][1] },
               {
                 name: "Fat",
-                value: 100 - macroPercents[0][0] + macroPercents[0][1]
+                value: 100 - (macroPercents[0][0] + macroPercents[0][1])
               }
             ]}
           />
@@ -233,7 +274,7 @@ const MacrosPanel = ({
               { name: "Carbs", value: macroPercents[1][1] },
               {
                 name: "Fat",
-                value: 100 - macroPercents[1][0] + macroPercents[1][1]
+                value: 100 - (macroPercents[1][0] + macroPercents[1][1])
               }
             ]}
           />

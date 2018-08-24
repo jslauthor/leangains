@@ -138,8 +138,11 @@ const reducer: (QueryState, Action) => QueryState = (
     case "STEPS_PER_DAY_CHANGED":
       return { ...state, stepsPerDay: action.payload };
     case "MACRO_PERCENT_CHANGED":
-      const { index, macroPercent } = action.payload;
+      let { index, macroPercent } = action.payload;
       const macroPercents = state.macroPercents.concat();
+      const protein: number = Math.min(60, Math.max(50, macroPercent[0]));
+      const carbs: number = Math.min(99, Math.max(51, macroPercent[1]));
+      macroPercent = [protein, carbs - protein];
       macroPercents[index] = macroPercent;
       return { ...state, macroPercents };
     default:
@@ -499,7 +502,9 @@ class App extends React.Component<{}, AppState> {
                       title={
                         <span>
                           Standard{" "}
-                          <Typography variant="caption">-500 kcal</Typography>
+                          <Typography variant="caption">
+                            {getDefaultCaloricAdjustment(state.gender)} kcal
+                          </Typography>
                         </span>
                       }
                       kcalAdjustment={getDefaultCaloricAdjustment(state.gender)}
