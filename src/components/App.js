@@ -172,7 +172,7 @@ export class StateProvider extends React.Component<
     metric: true,
     base: 0,
     bmr: 0,
-    macroPercents: [defaultMacros, defaultMacros, defaultMacros, defaultMacros],
+    macroPercents: defaultMacros,
     dispatch: (action: Action) => {
       this.setState((state: QueryState) => {
         const newState: QueryState = reducer(state, action);

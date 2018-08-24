@@ -20,7 +20,16 @@ export type QueryState = {
   macroPercents: Array<Macros> // P, C
 };
 
-export const defaultMacros: Macros = [60, 25];
+export const defaultStandardRestMacros: Macros = [60, 15];
+export const defaultStandardTrainingMacros: Macros = [50, 30];
+export const defaultIFRestMacros: Macros = [60, 10];
+export const defaultIFTrainingMacros: Macros = [55, 30];
+export const defaultMacros: Array<Macros> = [
+  defaultStandardRestMacros,
+  defaultStandardTrainingMacros,
+  defaultIFRestMacros,
+  defaultIFTrainingMacros
+];
 
 export const getDefaultCaloricAdjustment: GenderType => number = (
   gender: GenderType
@@ -161,11 +170,6 @@ export const getStateFromQuery: string => QueryState = (data: string) => {
     metric,
     base,
     bmr: base * Number(weight),
-    macroPercents: get(state, "macroPercents", [
-      defaultMacros,
-      defaultMacros,
-      defaultMacros,
-      defaultMacros
-    ])
+    macroPercents: get(state, "macroPercents", defaultMacros)
   };
 };
