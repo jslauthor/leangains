@@ -1,5 +1,5 @@
 // @flow
-import type { QueryState } from "../utils/StateUtils";
+import type { QueryState, Macros } from "../utils/StateUtils";
 
 import * as React from "react";
 import { PieChart, Pie, Cell } from "recharts";
@@ -27,7 +27,7 @@ type MacroChartProps = {
   data: Array<ChartData>,
   kcals: number,
   title: string,
-  onMacroChange: (Array<number>) => void
+  onMacroChange: Macros => void
 };
 
 type MacrosPanelProps = {
@@ -35,12 +35,10 @@ type MacrosPanelProps = {
   expanded: boolean,
   onChange: (SyntheticEvent<HTMLButtonElement>, boolean) => void,
   title: React.Node,
-  proteinPercent: number,
-  carbsPercent: number,
-  fatPercent: number,
+  macroPercents: Array<Macros>, // P, C, F
   kcalAdjustment: number,
-  onRestMacroChange: (Array<number>) => void,
-  onTrainingMacroChange: (Array<number>) => void
+  onRestMacroChange: Macros => void,
+  onTrainingMacroChange: Macros => void
 };
 
 const PROTEIN_COLOR = green[500];
@@ -106,7 +104,7 @@ const getMacroColor = (type: "C" | "F" | "P") => {
 const getRangeArray = (data: Array<ChartData>) => {
   return data.reduce(
     ({ values, sum }, { value }, index) => {
-      sum = sum + value;
+      sum += value;
       values.push(sum);
       return { values, sum };
     },
@@ -181,7 +179,7 @@ const MacroChart = ({ data, title, kcals, onMacroChange }: MacroChartProps) => (
     </MacroLabelsContainer>
     <Range
       value={getRangeArray(data)}
-      count={2}
+      count={3}
       allowCross={false}
       onChange={onMacroChange}
       trackStyle={[
@@ -200,9 +198,7 @@ const MacrosPanel = ({
   expanded,
   onChange,
   title,
-  proteinPercent = 60,
-  carbsPercent = 25,
-  fatPercent = 25,
+  macroPercents = [[60, 25], [60, 25]],
   kcalAdjustment,
   onRestMacroChange,
   onTrainingMacroChange
@@ -220,9 +216,12 @@ const MacrosPanel = ({
             title="Rest Day"
             kcals={Math.round(targetKcals * 0.925)}
             data={[
-              { name: "Protein", value: proteinPercent },
-              { name: "Carbs", value: carbsPercent },
-              { name: "Fat", value: fatPercent }
+              { name: "Protein", value: macroPercents[0][0] },
+              { name: "Carbs", value: macroPercents[0][1] },
+              {
+                name: "Fat",
+                value: 100 - macroPercents[0][0] + macroPercents[0][1]
+              }
             ]}
           />
           <MacroChart
@@ -230,9 +229,12 @@ const MacrosPanel = ({
             title="Training Day"
             kcals={Math.round(targetKcals * 1.0925)}
             data={[
-              { name: "Protein", value: proteinPercent },
-              { name: "Carbs", value: carbsPercent },
-              { name: "Fat", value: fatPercent }
+              { name: "Protein", value: macroPercents[1][0] },
+              { name: "Carbs", value: macroPercents[1][1] },
+              {
+                name: "Fat",
+                value: 100 - macroPercents[1][0] + macroPercents[1][1]
+              }
             ]}
           />
         </MacroChartsContainer>

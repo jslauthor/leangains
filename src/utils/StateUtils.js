@@ -1,6 +1,8 @@
 // @flow
+import get from "lodash.get";
 export type GenderType = "M" | "F" | string;
 export type MassType = "M" | "VM" | string;
+export type Macros = [number, number];
 type Range = { start: number, end: number };
 
 export type QueryState = {
@@ -14,20 +16,21 @@ export type QueryState = {
   stepsPerDay: number,
   metric: boolean,
   base: number,
-  bmr: number
+  bmr: number,
+  macroPercents: Array<Macros> // P, C
 };
 
-const nearest = value => Math.round(value * 100) / 100;
+export const defaultMacros: Macros = [60, 25];
 
-export const getDefaultCaloricDeficit: GenderType => number = (
+export const getDefaultCaloricAdjustment: GenderType => number = (
   gender: GenderType
 ) => {
   switch (gender) {
     case "F":
-      return 350;
+      return -350;
     case "M":
     default:
-      return 500;
+      return -500;
   }
 };
 
@@ -118,52 +121,24 @@ const convertStepsToBase: number => number = (steps: number) => {
 
 const sum = (total, value) => total + value;
 
-// localhost:3000/?data=Leonard%20Souza,M,200,182.88,13,M,38,6600,1
-
-export const stateToQueryString: QueryState => string = ({
-  name,
-  gender,
-  weight,
-  height,
-  bodyFatPercentage,
-  muscleMassAttr,
-  age,
-  stepsPerDay,
-  metric,
-  base,
-  bmr
-}) => {
-  const metricBit = metric ? 1 : 0;
-  return [
-    name,
-    gender,
-    nearest(weight),
-    nearest(height),
-    nearest(bodyFatPercentage),
-    muscleMassAttr,
-    age,
-    stepsPerDay,
-    metricBit
-  ]
-    .map(val => (typeof val === "number" && isNaN(val) ? "" : val))
-    .map(String)
-    .join(",");
+export const stateToQueryString: QueryState => string = data => {
+  return btoa(JSON.stringify(data));
 };
 
 export const getStateFromQuery: string => QueryState = (data: string) => {
-  let [
-    name,
-    gender = "M",
-    weight,
-    height,
-    bodyFatPercentage,
-    muscleMassAttr = "NA",
-    age,
-    stepsPerDay,
-    metric = true
-  ] = data.split(",");
+  let state;
+  try {
+    state = JSON.parse(atob(data));
+  } catch (e) {}
 
-  metric = !!Number(metric);
+  const gender = get(state, "gender", "M");
+  const weight = get(state, "weight", 0);
+  const height = get(state, "height", 0);
+  const bodyFatPercentage = get(state, "bodyFatPercentage", 0);
+  const muscleMassAttr = get(state, "muscleMassAttr", "NA");
+  const age = get(state, "age", 0);
+  const stepsPerDay = get(state, "stepsPerDay", 0);
+  const metric = get(state, "metric", true);
 
   const base = [
     convertGendertoBase((gender: GenderType)),
@@ -175,16 +150,22 @@ export const getStateFromQuery: string => QueryState = (data: string) => {
   ].reduce(sum, 0);
 
   return {
-    name: decodeURI(name),
+    name: get(state, "name", ""),
     gender,
-    weight: Number(weight),
-    height: Number(height),
-    bodyFatPercentage: Number(bodyFatPercentage),
+    weight,
+    height,
+    bodyFatPercentage,
     muscleMassAttr,
-    age: Number(age),
-    stepsPerDay: Number(stepsPerDay),
+    age,
+    stepsPerDay,
     metric,
     base,
-    bmr: base * Number(weight)
+    bmr: base * Number(weight),
+    macroPercents: get(state, "macroPercents", [
+      defaultMacros,
+      defaultMacros,
+      defaultMacros,
+      defaultMacros
+    ])
   };
 };

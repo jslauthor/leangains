@@ -1,9 +1,19 @@
 // @flow
-import type { QueryState, GenderType, MassType } from "../utils/StateUtils";
+import type {
+  QueryState,
+  GenderType,
+  MassType,
+  Macros
+} from "../utils/StateUtils";
 
 import * as React from "react";
 import styled from "styled-components";
-import { getStateFromQuery, stateToQueryString } from "../utils/StateUtils";
+import {
+  getStateFromQuery,
+  stateToQueryString,
+  getDefaultCaloricAdjustment,
+  defaultMacros
+} from "../utils/StateUtils";
 
 import MacrosPanel from "./MacrosPanel";
 import { CheckBox, CheckBoxOutlineBlank } from "@material-ui/icons";
@@ -34,7 +44,11 @@ type Action =
   | { type: "HEIGHT_CHANGED", payload: number }
   | { type: "BODY_FAT_CHANGED", payload: number }
   | { type: "MUSCLE_MASS_CHANGED", payload: MassType }
-  | { type: "STEPS_PER_DAY_CHANGED", payload: number };
+  | { type: "STEPS_PER_DAY_CHANGED", payload: number }
+  | {
+      type: "MACRO_PERCENT_CHANGED",
+      payload: { index: number, macroPercent: Macros }
+    };
 
 const standardChanged = (metric: number) => ({
   type: "STANDARD_CHANGED",
@@ -81,6 +95,11 @@ const stepsPerDayChanged = (steps: number) => ({
   payload: steps
 });
 
+const macroPercentChanged = (index: number) => (macroPercent: Macros) => ({
+  type: "MACRO_PERCENT_CHANGED",
+  payload: { index, macroPercent }
+});
+
 /**
  * Create Context provider and reducer which stores the state in query variables.
  * Yes, this is a side effect, but it is the data structure I want to use as the source of truth
@@ -89,11 +108,10 @@ const stepsPerDayChanged = (steps: number) => ({
 
 const Context: Object = React.createContext();
 const saveQueryParams = (state: QueryState) => {
-  window.history.pushState(
-    {},
-    document.title,
-    `${window.location.href.split("?")[0]}?data=${stateToQueryString(state)}`
-  );
+  // Save base64 encoded string to url for easy copy/paste
+  window.location.href = `${
+    window.location.href.split("#")[0]
+  }#data=${stateToQueryString(state)}`;
 };
 
 const reducer: (QueryState, Action) => QueryState = (
@@ -119,6 +137,11 @@ const reducer: (QueryState, Action) => QueryState = (
       return { ...state, muscleMassAttr: action.payload };
     case "STEPS_PER_DAY_CHANGED":
       return { ...state, stepsPerDay: action.payload };
+    case "MACRO_PERCENT_CHANGED":
+      const { index, macroPercent } = action.payload;
+      const macroPercents = state.macroPercents.concat();
+      macroPercents[index] = macroPercent;
+      return { ...state, macroPercents };
     default:
       return state;
   }
@@ -146,6 +169,7 @@ export class StateProvider extends React.Component<
     metric: true,
     base: 0,
     bmr: 0,
+    macroPercents: [defaultMacros, defaultMacros, defaultMacros, defaultMacros],
     dispatch: (action: Action) => {
       this.setState((state: QueryState) => {
         const newState: QueryState = reducer(state, action);
@@ -157,7 +181,11 @@ export class StateProvider extends React.Component<
 
   static getDerivedStateFromProps = (props: {}, state: StateProviderState) => {
     // Super hacky way of grabbing the query string without needing another lib
-    return getStateFromQuery(location.search.substring(6));
+    return getStateFromQuery(
+      window.location.href.substring(
+        window.location.href.split("#")[0].length + 6 // url length + #data=
+      )
+    );
   };
 
   render() {
@@ -272,7 +300,12 @@ const BmrDisplay = ({ state }) => {
   }, []);
 
   if (missingKeys.length === 0) {
-    return <BmrItem variant="display4">{Math.round(state.bmr)}</BmrItem>;
+    return (
+      <div>
+        <BmrItem variant="display4">{Math.round(state.bmr)}</BmrItem>
+        <Typography variant="caption">kcals</Typography>
+      </div>
+    );
   } else {
     return messages;
   }
@@ -285,6 +318,9 @@ type AppState = {
 // TODO: Include infomation tooltips that explain each
 // TODO: Allow decimals in number inputs
 // TODO: Create calendar with checkboxes for if they are training days
+// TODO: Add rest/training multipliers (1/1 for standard, 1.0925, .925 for training)
+// TODO: Add kcal adjustment: 0, bulk, cut, for training days
+
 class App extends React.Component<{}, AppState> {
   state: AppState = {
     expansionPanelStates: new Set(["cutPanel", "leangainsPanel"])
@@ -451,11 +487,10 @@ class App extends React.Component<{}, AppState> {
                     <Divider className="divider" />
                     <Typography variant="title">Maintenance Intake</Typography>
                     <BmrDisplay state={state} />
-                    <Typography variant="caption">kcals</Typography>
                   </BmrContainer>
                 </InputContainer>
                 {showMacros && (
-                  <div>
+                  <React.Fragment>
                     <Typography variant="subheading" gutterBottom>
                       Your macros
                     </Typography>
@@ -467,9 +502,17 @@ class App extends React.Component<{}, AppState> {
                           <Typography variant="caption">-500 kcal</Typography>
                         </span>
                       }
-                      kcalAdjustment={-500}
-                      macroAdjustment={0}
-                      proteinPercent={60}
+                      kcalAdjustment={getDefaultCaloricAdjustment(state.gender)}
+                      macroPercents={[
+                        state.macroPercents[0],
+                        state.macroPercents[1]
+                      ]}
+                      onRestMacroChange={macros =>
+                        state.dispatch(macroPercentChanged(0)(macros))
+                      }
+                      onTrainingMacroChange={macros =>
+                        state.dispatch(macroPercentChanged(1)(macros))
+                      }
                       onChange={this.handleExpansionChange("leangainsPanel")}
                       expanded={this.state.expansionPanelStates.has(
                         "leangainsPanel"
@@ -478,13 +521,21 @@ class App extends React.Component<{}, AppState> {
                     <MacrosPanel
                       state={state}
                       title="16:8 (Intermittent Fasting)"
-                      kcalAdjustment={-500}
-                      macroAdjustment={0}
-                      proteinPercent={60}
+                      kcalAdjustment={0}
+                      macroPercents={[
+                        state.macroPercents[2],
+                        state.macroPercents[3]
+                      ]}
+                      onRestMacroChange={macros =>
+                        state.dispatch(macroPercentChanged(2)(macros))
+                      }
+                      onTrainingMacroChange={macros =>
+                        state.dispatch(macroPercentChanged(3)(macros))
+                      }
                       onChange={this.handleExpansionChange("cutPanel")}
                       expanded={this.state.expansionPanelStates.has("cutPanel")}
                     />
-                  </div>
+                  </React.Fragment>
                 )}
               </AppContainer>
             );
