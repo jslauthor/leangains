@@ -322,7 +322,6 @@ type AppState = {
 // TODO: Create calendar with checkboxes for if they are training days
 // TODO: Add kcal adjustment: 0, bulk, cut, for training days
 // TODO?: Add percent adjustment between training/rest
-// TODO: Add protein tick marks (also to percent labels)
 
 class App extends React.Component<{}, AppState> {
   state: AppState = {

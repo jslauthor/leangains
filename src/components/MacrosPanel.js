@@ -140,7 +140,9 @@ const MacroLabel = ({
         {type}
       </Typography>
     </MacroType>
-    <Typography variant="body1">{grams}g</Typography>
+    <Typography variant="body1">
+      <strong>{grams}</strong> g
+    </Typography>
   </MacroLabelContainer>
 );
 
@@ -225,6 +227,11 @@ const MacroChart = ({ data, title, kcals, onMacroChange }: MacroChartProps) => (
       value={getRangeArray(data)}
       allowCross={false}
       onChange={onMacroChange}
+      pushable
+      marks={{
+        "50": "",
+        "60": ""
+      }}
       trackStyle={[
         { backgroundColor: CARB_COLOR },
         { backgroundColor: FAT_COLOR }
@@ -232,7 +239,9 @@ const MacroChart = ({ data, title, kcals, onMacroChange }: MacroChartProps) => (
       handleStyle={[{}, {}, { display: "none" }]}
       railStyle={{ backgroundColor: PROTEIN_COLOR }}
     />
-    <Typography variant="caption">Adjust your macro ratio</Typography>
+    <Typography variant="caption">
+      Adjust your macro ratio (protein 50%-60%)
+    </Typography>
   </MacroContainer>
 );
 
