@@ -282,7 +282,7 @@ const checkboxStyle = {
 
 const getMissingKeys = state =>
   Object.keys(requiredBmrKeys).filter(
-    key => formatValue(state[key]).length === 0
+    key => formatValue(state[key]).length === 0 || state[key] < 0
   );
 
 const BmrDisplay = ({ state }) => {
@@ -319,7 +319,6 @@ type AppState = {
 };
 
 // TODO: Include infomation tooltips that explain each
-// TODO: Allow decimals in number inputs
 // TODO: Create calendar with checkboxes for if they are training days
 // TODO: Add kcal adjustment: 0, bulk, cut, for training days
 // TODO?: Add percent adjustment between training/rest
@@ -422,6 +421,7 @@ class App extends React.Component<{}, AppState> {
                     )}
                     label="Weight"
                     type="number"
+                    error={state.weight < 0}
                     onChange={event =>
                       state.dispatch(
                         weightChanged(state.metric, event.target.value)
@@ -433,6 +433,7 @@ class App extends React.Component<{}, AppState> {
                     placeholder="Enter your age"
                     value={formatValue(state.age)}
                     label="Age"
+                    error={state.age < 0}
                     type="number"
                     onChange={event =>
                       state.dispatch(ageChanged(event.target.value))
@@ -446,6 +447,7 @@ class App extends React.Component<{}, AppState> {
                     )}
                     label={`Height ${state.metric ? "(cm)" : "(in)"}`}
                     type="number"
+                    error={state.height < 0}
                     onChange={event =>
                       state.dispatch(
                         heightChanged(state.metric, event.target.value)
@@ -458,6 +460,7 @@ class App extends React.Component<{}, AppState> {
                     value={formatValue(state.bodyFatPercentage)}
                     label="Body Fat Percentage"
                     type="number"
+                    error={state.bodyFatPercentage < 0}
                     onChange={event =>
                       state.dispatch(bodyFatChanged(event.target.value))
                     }
@@ -487,6 +490,7 @@ class App extends React.Component<{}, AppState> {
                     placeholder="Enter your number of average daily steps"
                     value={formatValue(state.stepsPerDay, "0")}
                     type="number"
+                    error={state.stepsPerDay < 0}
                     onChange={event =>
                       state.dispatch(stepsPerDayChanged(event.target.value))
                     }
