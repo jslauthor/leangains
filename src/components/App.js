@@ -321,8 +321,9 @@ type AppState = {
 // TODO: Include infomation tooltips that explain each
 // TODO: Allow decimals in number inputs
 // TODO: Create calendar with checkboxes for if they are training days
-// TODO: Create different defaults for macros
 // TODO: Add kcal adjustment: 0, bulk, cut, for training days
+// TODO?: Add percent adjustment between training/rest
+// TODO: Add protein tick marks (also to percent labels)
 
 class App extends React.Component<{}, AppState> {
   state: AppState = {
@@ -420,6 +421,7 @@ class App extends React.Component<{}, AppState> {
                       getDisplayWeight(state.metric, state.weight)
                     )}
                     label="Weight"
+                    type="number"
                     onChange={event =>
                       state.dispatch(
                         weightChanged(state.metric, event.target.value)
@@ -431,6 +433,7 @@ class App extends React.Component<{}, AppState> {
                     placeholder="Enter your age"
                     value={formatValue(state.age)}
                     label="Age"
+                    type="number"
                     onChange={event =>
                       state.dispatch(ageChanged(event.target.value))
                     }
@@ -442,6 +445,7 @@ class App extends React.Component<{}, AppState> {
                       getDisplayHeight(state.metric, state.height)
                     )}
                     label={`Height ${state.metric ? "(cm)" : "(in)"}`}
+                    type="number"
                     onChange={event =>
                       state.dispatch(
                         heightChanged(state.metric, event.target.value)
@@ -453,6 +457,7 @@ class App extends React.Component<{}, AppState> {
                     placeholder="Enter your body fat percentage"
                     value={formatValue(state.bodyFatPercentage)}
                     label="Body Fat Percentage"
+                    type="number"
                     onChange={event =>
                       state.dispatch(bodyFatChanged(event.target.value))
                     }
@@ -481,6 +486,7 @@ class App extends React.Component<{}, AppState> {
                     style={{ gridArea: "activity" }}
                     placeholder="Enter your number of average daily steps"
                     value={formatValue(state.stepsPerDay, "0")}
+                    type="number"
                     onChange={event =>
                       state.dispatch(stepsPerDayChanged(event.target.value))
                     }

@@ -31,7 +31,7 @@ export const defaultMacros: Array<Macros> = [
   defaultIFTrainingMacros
 ];
 
-export const getDefaultCaloricAdjustment: GenderType => number = (
+export const getDefaultCaloricAdjustment: GenderType => -500 | -350 = (
   gender: GenderType
 ) => {
   switch (gender) {
