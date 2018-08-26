@@ -80,6 +80,7 @@ const MacroChartsContainer = styled.div`
   justify-content: space-evenly;
   width: 100%;
   position: relative;
+  flex-wrap: wrap;
 `;
 
 const MacroContainer = styled.div`
@@ -87,6 +88,11 @@ const MacroContainer = styled.div`
   flex-direction: column;
   width: 45%;
   position: relative;
+  min-width: 250px;
+  @media (max-width: 603px) {
+    margin-bottom: 20px;
+    width: 100%;
+  }
 `;
 
 const MacroKcalContainer = styled.div`
@@ -120,6 +126,12 @@ const MacroLabelContainer = styled.div`
 const MacroLabelsContainer = styled(MacroLabelContainer)`
   justify-content: space-around;
   margin-bottom: 25px;
+  width: 250px;
+  align-self: center;
+`;
+const MacroRangeContainer = styled.div`
+  max-width: 250px;
+  align-self: center;
 `;
 
 const getMacroColor = (type: "C" | "F" | "P") => {
@@ -252,25 +264,27 @@ const MacroChart = ({ data, title, kcals, onMacroChange }: MacroChartProps) => (
         />
       ))}
     </MacroLabelsContainer>
-    <Range
-      value={getRangeArray(data)}
-      allowCross={false}
-      onChange={onMacroChange}
-      pushable
-      marks={{
-        "50": "",
-        "60": ""
-      }}
-      trackStyle={[
-        { backgroundColor: CARB_COLOR },
-        { backgroundColor: FAT_COLOR }
-      ]}
-      handleStyle={[{}, {}, { display: "none" }]}
-      railStyle={{ backgroundColor: PROTEIN_COLOR }}
-    />
-    <Typography variant="caption">
-      Adjust your macro ratio (protein 50%-60%)
-    </Typography>
+    <MacroRangeContainer>
+      <Range
+        value={getRangeArray(data)}
+        allowCross={false}
+        onChange={onMacroChange}
+        pushable
+        marks={{
+          "50": "",
+          "60": ""
+        }}
+        trackStyle={[
+          { backgroundColor: CARB_COLOR },
+          { backgroundColor: FAT_COLOR }
+        ]}
+        handleStyle={[{}, {}, { display: "none" }]}
+        railStyle={{ backgroundColor: PROTEIN_COLOR }}
+      />
+      <Typography variant="caption">
+        Adjust your macro ratio (protein 50%-60%)
+      </Typography>
+    </MacroRangeContainer>
   </MacroContainer>
 );
 

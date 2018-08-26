@@ -144,7 +144,7 @@ const reducer: (QueryState, Action) => QueryState = (
     case "GENDER_CHANGED":
       return { ...state, gender: action.payload };
     case "NAME_CHANGED":
-      return { ...state, name: action.payload };
+      return { ...state, name: action.payload.substring(0, 45) };
     case "WEIGHT_CHANGED":
       return { ...state, weight: action.payload };
     case "AGE_CHANGED":
@@ -268,6 +268,19 @@ const InputContainer = styled(Paper)`
     "bmr activity";
   grid-gap: 20px;
   margin-bottom: 14px;
+  @media (max-width: 603px) {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "name"
+      "age"
+      "weight"
+      "gender"
+      "muscle"
+      "height"
+      "fat"
+      "activity"
+      "bmr";
+  }
 `;
 
 const BmrContainer = styled.div`
@@ -353,11 +366,7 @@ type AppState = {
 
 // TODO: Include infomation tooltips that explain each
 // TODO: Create calendar with checkboxes for if they are training days
-// TODO: Add kcal adjustment: 0, bulk, cut, for training days
-// TODO?: Add percent adjustment between training/rest
 // TODO: Add warnings if fat is too low, etc
-// TODO: Compress JSON with https://github.com/tcorral/JSONC
-// TODO: Add close button to popup config
 
 class App extends React.Component<{}, AppState> {
   state: AppState = {
