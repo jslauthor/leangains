@@ -8,11 +8,19 @@ import styled from "styled-components";
 import "rc-slider/assets/index.css";
 import { Range } from "rc-slider";
 
+import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import ExpansionPanel from "@material-ui/core/ExpansionPanel";
 import ExpansionPanelSummary from "@material-ui/core/ExpansionPanelSummary";
 import ExpansionPanelDetails from "@material-ui/core/ExpansionPanelDetails";
+
+import Dialog from "@material-ui/core/Dialog";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogTitle from "@material-ui/core/DialogTitle";
+
+import SettingsIcon from "@material-ui/icons/Settings";
+import IconButton from "@material-ui/core/IconButton";
 
 import blue from "@material-ui/core/colors/blue";
 import green from "@material-ui/core/colors/green";
@@ -26,7 +34,7 @@ type ChartData = {
 type MacroChartProps = {
   data: Array<ChartData>,
   kcals: number,
-  title: string,
+  title: string | React.Node,
   onMacroChange: Macros => void
 };
 
@@ -39,8 +47,13 @@ type MacrosPanelProps = {
   kcalAdjustment: number,
   onRestMacroChange: Macros => void,
   onTrainingMacroChange: Macros => void,
+  onRestDayMultiplierChange: number => void,
+  onTrainingDayMultiplierChange: number => void,
+  onKcalAdjustmentChange: number => void,
   restDayMultiplier: number,
-  trainingDayMultiplier: number
+  trainingDayMultiplier: number,
+  isDialogueOpen?: boolean,
+  onDialogueOpenChange?: boolean => (SyntheticEvent<HTMLButtonElement>) => void
 };
 
 const PROTEIN_COLOR = green[500];
@@ -80,6 +93,20 @@ const MacroKcalContainer = styled.div`
   justify-content: center;
   margin-top: -55px;
   margin-bottom: 15px;
+`;
+
+const FlexRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const FlexColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  * {
+    margin-bottom: 5px;
+  }
 `;
 
 const MACRO_KEYS = ["P", "C", "F"];
@@ -245,30 +272,132 @@ const MacroChart = ({ data, title, kcals, onMacroChange }: MacroChartProps) => (
   </MacroContainer>
 );
 
+const formatKcalAdjustmentLabel = (kcalAdjustment: number) => {
+  if (kcalAdjustment < 0) {
+    return `- ${Math.abs(kcalAdjustment)}`;
+  }
+
+  return `+ ${kcalAdjustment}`;
+};
+
+const nearest = value => Math.round(value * 100) / 100;
+
+const formatMultiplier = (multiplier: number) => nearest(multiplier * 100);
+
+const formatPercentLabel = (multiplier: number) => {
+  const sign = multiplier > 0 ? "+" : multiplier < 0 ? "-" : "+/-";
+  return `(${sign}${Math.abs(formatMultiplier(multiplier))}%)`;
+};
+
+const MacroSettingsDialogue = ({
+  title,
+  open,
+  onClose,
+  kcalAdjustment,
+  onKcalAdjustmentChange,
+  restDayMultiplier,
+  onRestDayMultiplierChange,
+  trainingDayMultiplier,
+  onTrainingDayMultiplierChange
+}) => {
+  return (
+    <Dialog open={open} onClose={onClose} aria-labelledby="form-dialog-title">
+      <DialogTitle id="form-dialog-title">{title}</DialogTitle>
+      <DialogContent>
+        <FlexColumn>
+          <TextField
+            placeholder="Enter caloric deficit or surplus"
+            value={kcalAdjustment === 0 ? "" : kcalAdjustment}
+            label="Gross Kcal Adjustment"
+            type="number"
+            onChange={event =>
+              onKcalAdjustmentChange(Number(event.target.value))
+            }
+          />
+          <TextField
+            placeholder="Enter rest day kcal % change"
+            value={formatMultiplier(restDayMultiplier)}
+            label="Rest Day Kcal % Change"
+            type="number"
+            onChange={event =>
+              onRestDayMultiplierChange(Number(event.target.value) / 100)
+            }
+          />
+          <TextField
+            placeholder="Enter training day kcal % change"
+            value={formatMultiplier(trainingDayMultiplier)}
+            label="Training Day Kcal % Change"
+            type="number"
+            onChange={event =>
+              onTrainingDayMultiplierChange(Number(event.target.value) / 100)
+            }
+          />
+        </FlexColumn>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const SettingsButton = ({ onClick }) => (
+  <IconButton
+    style={{ width: 28, height: 28, marginLeft: 5 }}
+    aria-label="Settings"
+    onClick={onClick}
+  >
+    <SettingsIcon fontSize="inherit" style={{ fontSize: 14 }} />
+  </IconButton>
+);
+
+const applyPercentChange = (base: number, percent: number) =>
+  Math.round(base + base * percent);
+
 const MacrosPanel = ({
   state,
   expanded,
   onChange,
   title,
+  isDialogueOpen,
+  onDialogueOpenChange,
   macroPercents = [[60, 25], [60, 25]],
   kcalAdjustment,
   onRestMacroChange,
   onTrainingMacroChange,
+  onKcalAdjustmentChange,
   restDayMultiplier = 1,
-  trainingDayMultiplier = 1
+  trainingDayMultiplier = 1,
+  onRestDayMultiplierChange,
+  onTrainingDayMultiplierChange
 }: MacrosPanelProps) => {
   const targetKcals = state.bmr + kcalAdjustment;
   return (
     <ExpansionPanel expanded={expanded} onChange={onChange}>
       <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography variant="title">{title}</Typography>
+        <div>
+          <Typography variant="title">{title}</Typography>
+          <FlexRow>
+            <Typography variant="caption">
+              <strong>{Math.round(targetKcals)} adjusted kcals</strong>{" "}
+              (maintenance {formatKcalAdjustmentLabel(kcalAdjustment)})
+            </Typography>
+            <SettingsButton
+              onClick={onDialogueOpenChange && onDialogueOpenChange(true)}
+            />
+          </FlexRow>
+        </div>
       </ExpansionPanelSummary>
       <ExpansionPanelDetails>
         <MacroChartsContainer>
           <MacroChart
             onMacroChange={onRestMacroChange}
-            title="Rest Day"
-            kcals={Math.round(targetKcals * restDayMultiplier)}
+            title={
+              <FlexRow>
+                Rest Day {formatPercentLabel(restDayMultiplier)}{" "}
+                <SettingsButton
+                  onClick={onDialogueOpenChange && onDialogueOpenChange(true)}
+                />
+              </FlexRow>
+            }
+            kcals={applyPercentChange(targetKcals, restDayMultiplier)}
             data={[
               { name: "Protein", value: macroPercents[0][0] },
               { name: "Carbs", value: macroPercents[0][1] },
@@ -280,8 +409,15 @@ const MacrosPanel = ({
           />
           <MacroChart
             onMacroChange={onTrainingMacroChange}
-            title="Training Day"
-            kcals={Math.round(targetKcals * trainingDayMultiplier)}
+            title={
+              <FlexRow>
+                Training Day {formatPercentLabel(trainingDayMultiplier)}{" "}
+                <SettingsButton
+                  onClick={onDialogueOpenChange && onDialogueOpenChange(true)}
+                />
+              </FlexRow>
+            }
+            kcals={applyPercentChange(targetKcals, trainingDayMultiplier)}
             data={[
               { name: "Protein", value: macroPercents[1][0] },
               { name: "Carbs", value: macroPercents[1][1] },
@@ -293,8 +429,50 @@ const MacrosPanel = ({
           />
         </MacroChartsContainer>
       </ExpansionPanelDetails>
+      <MacroSettingsDialogue
+        title={title}
+        open={isDialogueOpen}
+        onClose={onDialogueOpenChange && onDialogueOpenChange(false)}
+        kcalAdjustment={kcalAdjustment}
+        onRestDayMultiplierChange={onRestDayMultiplierChange}
+        onTrainingDayMultiplierChange={onTrainingDayMultiplierChange}
+        onKcalAdjustmentChange={onKcalAdjustmentChange}
+        restDayMultiplier={restDayMultiplier}
+        trainingDayMultiplier={trainingDayMultiplier}
+      />
     </ExpansionPanel>
   );
 };
 
-export default MacrosPanel;
+type MacrosPanelState = {
+  isDialogueOpen: boolean
+};
+
+class MacrosPanelStateProvider extends React.Component<
+  MacrosPanelProps,
+  MacrosPanelState
+> {
+  state = {
+    isDialogueOpen: false
+  };
+
+  onDialogueOpenChange = (isOpen: boolean) => (
+    event: SyntheticEvent<HTMLButtonElement>
+  ) => {
+    event.stopPropagation();
+    event.preventDefault();
+    this.setState({ isDialogueOpen: isOpen });
+  };
+
+  render() {
+    return (
+      <MacrosPanel
+        {...this.props}
+        isDialogueOpen={this.state.isDialogueOpen}
+        onDialogueOpenChange={this.onDialogueOpenChange}
+      />
+    );
+  }
+}
+
+export default MacrosPanelStateProvider;

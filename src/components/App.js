@@ -11,8 +11,8 @@ import styled from "styled-components";
 import {
   getStateFromQuery,
   stateToQueryString,
-  getDefaultCaloricAdjustment,
-  defaultMacros
+  defaultMacros,
+  getDefaultCaloricAdjustments
 } from "../utils/StateUtils";
 
 import MacrosPanel from "./MacrosPanel";
@@ -48,6 +48,14 @@ type Action =
   | {
       type: "MACRO_PERCENT_CHANGED",
       payload: { index: number, macroPercent: Macros }
+    }
+  | {
+      type: "KCAL_ADJUSTMENT_CHANGED",
+      payload: { index: number, kcalAdjustment: number }
+    }
+  | {
+      type: "MULTIPLIER_CHANGED",
+      payload: { index: number, multiplier: number, isRest: boolean }
     };
 
 const standardChanged = (metric: number) => ({
@@ -100,6 +108,18 @@ const macroPercentChanged = (index: number) => (macroPercent: Macros) => ({
   payload: { index, macroPercent }
 });
 
+const kcalAdjustmentChanged = (index: number) => (kcalAdjustment: number) => ({
+  type: "KCAL_ADJUSTMENT_CHANGED",
+  payload: { index, kcalAdjustment }
+});
+
+const multiplierChanged = (index: number) => (isRest: boolean) => (
+  multiplier: number
+) => ({
+  type: "MULTIPLIER_CHANGED",
+  payload: { index, multiplier, isRest }
+});
+
 /**
  * Create Context provider and reducer which stores the state in query variables.
  * Yes, this is a side effect, but it is the data structure I want to use as the source of truth
@@ -142,9 +162,18 @@ const reducer: (QueryState, Action) => QueryState = (
       const macroPercents = state.macroPercents.concat();
       const protein: number = Math.min(60, Math.max(50, macroPercent[0]));
       const carbs: number = Math.min(99, Math.max(51, macroPercent[1]));
-      macroPercent = [protein, carbs - protein];
-      macroPercents[index] = macroPercent;
+      macroPercents[index] = [protein, carbs - protein];
       return { ...state, macroPercents };
+    case "KCAL_ADJUSTMENT_CHANGED":
+      const { index: kcalIndex, kcalAdjustment } = action.payload;
+      const kcalAdjustments = state.kcalAdjustments.concat();
+      kcalAdjustments[kcalIndex] = kcalAdjustment;
+      return { ...state, kcalAdjustments };
+    case "MULTIPLIER_CHANGED":
+      const { index: multiplierIndex, isRest, multiplier } = action.payload;
+      const multipliers = state.multipliers.concat();
+      multipliers[multiplierIndex][isRest ? 0 : 1] = multiplier;
+      return { ...state, multipliers };
     default:
       return state;
   }
@@ -173,6 +202,8 @@ export class StateProvider extends React.Component<
     base: 0,
     bmr: 0,
     macroPercents: defaultMacros,
+    kcalAdjustments: getDefaultCaloricAdjustments("M"),
+    multipliers: [[0, 0], [-0.075, 0.075]],
     dispatch: (action: Action) => {
       this.setState((state: QueryState) => {
         const newState: QueryState = reducer(state, action);
@@ -305,8 +336,10 @@ const BmrDisplay = ({ state }) => {
   if (missingKeys.length === 0) {
     return (
       <div>
-        <BmrItem variant="display4">{Math.round(state.bmr)}</BmrItem>
-        <Typography variant="caption">kcals</Typography>
+        <BmrItem variant="display4" color="primary">
+          {Math.round(state.bmr)}
+        </BmrItem>
+        <Typography variant="caption">daily kcals</Typography>
       </div>
     );
   } else {
@@ -322,6 +355,9 @@ type AppState = {
 // TODO: Create calendar with checkboxes for if they are training days
 // TODO: Add kcal adjustment: 0, bulk, cut, for training days
 // TODO?: Add percent adjustment between training/rest
+// TODO: Add warnings if fat is too low, etc
+// TODO: Compress JSON with https://github.com/tcorral/JSONC
+// TODO: Add close button to popup config
 
 class App extends React.Component<{}, AppState> {
   state: AppState = {
@@ -375,7 +411,7 @@ class App extends React.Component<{}, AppState> {
                       <FormControlLabel
                         key={option.value}
                         label={option.label}
-                        control={<Radio />}
+                        control={<Radio color="primary" />}
                         value={option.value}
                       />
                     ))}
@@ -508,17 +544,16 @@ class App extends React.Component<{}, AppState> {
                     </Typography>
                     <MacrosPanel
                       state={state}
-                      title={
-                        <span>
-                          Standard{" "}
-                          <Typography variant="caption">
-                            {getDefaultCaloricAdjustment(state.gender)} kcal
-                          </Typography>
-                        </span>
+                      title="Standard"
+                      restDayMultiplier={state.multipliers[0][0]}
+                      trainingDayMultiplier={state.multipliers[0][1]}
+                      onRestDayMultiplierChange={multiplier =>
+                        state.dispatch(multiplierChanged(0)(true)(multiplier))
                       }
-                      restDayMultiplier={1}
-                      trainingDayMultiplier={1}
-                      kcalAdjustment={getDefaultCaloricAdjustment(state.gender)}
+                      onTrainingDayMultiplierChange={multiplier =>
+                        state.dispatch(multiplierChanged(0)(false)(multiplier))
+                      }
+                      kcalAdjustment={state.kcalAdjustments[0]}
                       macroPercents={[
                         state.macroPercents[0],
                         state.macroPercents[1]
@@ -529,6 +564,9 @@ class App extends React.Component<{}, AppState> {
                       onTrainingMacroChange={macros =>
                         state.dispatch(macroPercentChanged(1)(macros))
                       }
+                      onKcalAdjustmentChange={kcal =>
+                        state.dispatch(kcalAdjustmentChanged(0)(kcal))
+                      }
                       onChange={this.handleExpansionChange("leangainsPanel")}
                       expanded={this.state.expansionPanelStates.has(
                         "leangainsPanel"
@@ -537,9 +575,15 @@ class App extends React.Component<{}, AppState> {
                     <MacrosPanel
                       state={state}
                       title="16:8 (Intermittent Fasting)"
-                      restDayMultiplier={0.925}
-                      trainingDayMultiplier={1.0925}
-                      kcalAdjustment={0}
+                      restDayMultiplier={state.multipliers[1][0]}
+                      trainingDayMultiplier={state.multipliers[1][1]}
+                      onRestDayMultiplierChange={multiplier =>
+                        state.dispatch(multiplierChanged(1)(true)(multiplier))
+                      }
+                      onTrainingDayMultiplierChange={multiplier =>
+                        state.dispatch(multiplierChanged(1)(false)(multiplier))
+                      }
+                      kcalAdjustment={state.kcalAdjustments[1]}
                       macroPercents={[
                         state.macroPercents[2],
                         state.macroPercents[3]
@@ -549,6 +593,9 @@ class App extends React.Component<{}, AppState> {
                       }
                       onTrainingMacroChange={macros =>
                         state.dispatch(macroPercentChanged(3)(macros))
+                      }
+                      onKcalAdjustmentChange={kcal =>
+                        state.dispatch(kcalAdjustmentChanged(1)(kcal))
                       }
                       onChange={this.handleExpansionChange("cutPanel")}
                       expanded={this.state.expansionPanelStates.has("cutPanel")}

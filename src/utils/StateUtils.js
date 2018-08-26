@@ -17,7 +17,9 @@ export type QueryState = {
   metric: boolean,
   base: number,
   bmr: number,
-  macroPercents: Array<Macros> // P, C
+  macroPercents: Array<Macros>, // P, C
+  kcalAdjustments: Array<number>, // daily kcal surplus or deficit
+  multipliers: Array<[number, number]> // tuple of rest/training percents stored in decimal form
 };
 
 export const defaultStandardRestMacros: Macros = [60, 15];
@@ -42,6 +44,10 @@ export const getDefaultCaloricAdjustment: GenderType => -500 | -350 = (
       return -500;
   }
 };
+
+export const getDefaultCaloricAdjustments: string => number[] = (
+  gender: string
+) => [getDefaultCaloricAdjustment(gender), 0];
 
 const convertGendertoBase: GenderType => number = (gender: GenderType) => {
   switch (gender) {
@@ -170,6 +176,12 @@ export const getStateFromQuery: string => QueryState = (data: string) => {
     metric,
     base,
     bmr: base * Number(weight),
-    macroPercents: get(state, "macroPercents", defaultMacros)
+    macroPercents: get(state, "macroPercents", defaultMacros),
+    kcalAdjustments: get(
+      state,
+      "kcalAdjustments",
+      getDefaultCaloricAdjustments(gender)
+    ),
+    multipliers: get(state, "multipliers", [[0, 0], [-0.075, 0.075]])
   };
 };
