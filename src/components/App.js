@@ -16,7 +16,7 @@ import {
 } from "../utils/StateUtils";
 
 import MacrosPanel from "./MacrosPanel";
-import { CheckBox, CheckBoxOutlineBlank } from "@material-ui/icons";
+import { CheckBox, CheckBoxOutlineBlank, Favorite } from "@material-ui/icons";
 import TextField from "@material-ui/core/TextField";
 import MenuItem from "@material-ui/core/MenuItem";
 import Typography from "@material-ui/core/Typography";
@@ -249,6 +249,22 @@ const HeaderContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 10px;
+`;
+
+const FooterContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+`;
+
+const SocialContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 255px;
+  margin-top: 25px;
 `;
 
 const MeasurementRadioGroup = styled(RadioGroup)`
@@ -366,7 +382,6 @@ type AppState = {
 
 // TODO: Include infomation tooltips that explain each
 // TODO: Create calendar with checkboxes for if they are training days
-// TODO: Add warnings if fat is too low, etc
 
 class App extends React.Component<{}, AppState> {
   state: AppState = {
@@ -398,9 +413,15 @@ class App extends React.Component<{}, AppState> {
                     <Typography variant="headline" gutterBottom>
                       Leangains Calculator
                     </Typography>
-                    <Typography variant="subheading" gutterBottom>
-                      Buy the book!
-                    </Typography>
+                    <a
+                      href="https://www.amazon.com/Leangains-Method-Researched-Practiced-Perfected-ebook/dp/B07G3GFLTX/ref=sr_1_1?ie=UTF8&qid=1535321695&sr=8-1&keywords=leangains?_encoding=UTF8&camp=1789&creative=9325&linkCode=ur2&tag=storypodca-20&linkId=2P4S6EY6B462X4AR"
+                      target="_blank"
+                    >
+                      <img
+                        src="https://images-na.ssl-images-amazon.com/images/G/01/associates/remote-buy-box/buy1.gif"
+                        alt="Buy Leangains"
+                      />
+                    </a>
                   </div>
 
                   <MeasurementRadioGroup
@@ -611,6 +632,48 @@ class App extends React.Component<{}, AppState> {
                     />
                   </React.Fragment>
                 )}
+                <FooterContainer>
+                  <Typography
+                    variant="body1"
+                    style={{ display: "flex", alignItems: "center" }}
+                  >
+                    Made with
+                    <Favorite
+                      color="secondary"
+                      fontSize="inherit"
+                      style={{ fontSize: 15, margin: "0px 3px" }}
+                    />
+                    by&nbsp;
+                    <a href="http://www.leonardsouza.com" target="_blank">
+                      Leonard Souza
+                    </a>
+                  </Typography>
+                  <Typography variant="caption">
+                    This site is{" "}
+                    <a
+                      href="https://github.com/jslauthor/leangains"
+                      target="_blank"
+                    >
+                      available on Github.
+                    </a>
+                  </Typography>
+                  <SocialContainer>
+                    <a
+                      className="github-button"
+                      href="https://github.com/jslauthor"
+                      aria-label="Follow @jslauthor on GitHub"
+                    >
+                      Follow @jslauthor
+                    </a>
+                    <a
+                      href="https://twitter.com/jslauthor?ref_src=twsrc%5Etfw"
+                      className="twitter-follow-button"
+                      data-show-count="false"
+                    >
+                      Follow @jslauthor
+                    </a>
+                  </SocialContainer>
+                </FooterContainer>
               </AppContainer>
             );
           }}
