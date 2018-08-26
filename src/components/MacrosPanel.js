@@ -18,7 +18,9 @@ import ExpansionPanelDetails from "@material-ui/core/ExpansionPanelDetails";
 import Dialog from "@material-ui/core/Dialog";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogActions from "@material-ui/core/DialogActions";
 
+import Button from "@material-ui/core/Button";
 import SettingsIcon from "@material-ui/icons/Settings";
 import IconButton from "@material-ui/core/IconButton";
 
@@ -334,6 +336,11 @@ const MacroSettingsDialogue = ({
           />
         </FlexColumn>
       </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="primary">
+          Done
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };
