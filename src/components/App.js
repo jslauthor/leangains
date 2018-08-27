@@ -144,7 +144,11 @@ const reducer: (QueryState, Action) => QueryState = (
     case "STANDARD_CHANGED":
       return { ...state, metric: action.payload };
     case "GENDER_CHANGED":
-      return { ...state, gender: action.payload };
+      return {
+        ...state,
+        gender: action.payload,
+        kcalAdjustments: getDefaultCaloricAdjustments(action.payload)
+      };
     case "NAME_CHANGED":
       return { ...state, name: action.payload.substring(0, 45) };
     case "WEIGHT_CHANGED":
