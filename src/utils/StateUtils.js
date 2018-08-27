@@ -47,7 +47,10 @@ export const getDefaultCaloricAdjustment: GenderType => -500 | -350 = (
 
 export const getDefaultCaloricAdjustments: string => number[] = (
   gender: string
-) => [getDefaultCaloricAdjustment(gender), 0];
+) => {
+  const defaultAdjustment = getDefaultCaloricAdjustment(gender);
+  return [defaultAdjustment, defaultAdjustment];
+};
 
 const convertGendertoBase: GenderType => number = (gender: GenderType) => {
   switch (gender) {
