@@ -276,6 +276,9 @@ const DisclaimerContainer = styled.div`
 const MeasurementRadioGroup = styled(RadioGroup)`
   display: flex;
   flex-direction: row !important;
+  @media (max-width: 603px) {
+    width: 30%;
+  }
 `;
 
 const InputContainer = styled(Paper)`

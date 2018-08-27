@@ -4,6 +4,7 @@ import type { QueryState, Macros } from "../utils/StateUtils";
 import * as React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import styled from "styled-components";
+import isEqual from "react-fast-compare";
 
 import "rc-slider/assets/index.css";
 import { Range } from "rc-slider";
@@ -220,73 +221,80 @@ const renderLabel = ({
   );
 };
 
-const MacroChart = ({ data, title, kcals, onMacroChange }: MacroChartProps) => (
-  <MacroContainer>
-    <Typography variant="subheading">{title}</Typography>
-    <ResponsiveContainer width="100%" height={120}>
-      <PieChart>
-        <Pie
-          cx="50%"
-          cy={100}
-          data={data}
-          dataKey="value"
-          innerRadius={60}
-          outerRadius={80}
-          startAngle={180}
-          endAngle={0}
-          label={renderLabel}
-          labelLine={false}
-          isAnimationActive={false}
-        >
-          {data.map((entry, index) => (
-            <Cell key={index} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-      </PieChart>
-    </ResponsiveContainer>
+const MacroChartBase = ({
+  data,
+  title,
+  kcals,
+  onMacroChange
+}: MacroChartProps) => {
+  return (
+    <MacroContainer>
+      <Typography variant="subheading">{title}</Typography>
+      <ResponsiveContainer width="100%" height={120}>
+        <PieChart>
+          <Pie
+            cx="50%"
+            cy={100}
+            data={data}
+            dataKey="value"
+            innerRadius={60}
+            outerRadius={80}
+            startAngle={180}
+            endAngle={0}
+            label={renderLabel}
+            labelLine={false}
+            isAnimationActive={false}
+          >
+            {data.map((entry, index) => (
+              <Cell key={index} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
 
-    <MacroKcalContainer>
-      <div>
-        <Typography variant="display1">{kcals}</Typography>
-        <Typography variant="caption">daily kcals</Typography>
-      </div>
-    </MacroKcalContainer>
-    <MacroLabelsContainer>
-      {MACRO_KEYS.map((macro, index) => (
-        <MacroLabel
-          key={macro}
-          type={macro}
-          grams={String(
-            Math.floor(
-              (kcals * (data[index].value / 100)) / getGramValue(macro)
-            )
-          )}
+      <MacroKcalContainer>
+        <div>
+          <Typography variant="display1">{kcals}</Typography>
+          <Typography variant="caption">daily kcals</Typography>
+        </div>
+      </MacroKcalContainer>
+      <MacroLabelsContainer>
+        {MACRO_KEYS.map((macro, index) => (
+          <MacroLabel
+            key={macro}
+            type={macro}
+            grams={String(
+              Math.floor(
+                (kcals * (data[index].value / 100)) / getGramValue(macro)
+              )
+            )}
+          />
+        ))}
+      </MacroLabelsContainer>
+      <MacroRangeContainer>
+        <Range
+          value={getRangeArray(data)}
+          allowCross={false}
+          onChange={onMacroChange}
+          pushable
+          marks={{
+            "50": "",
+            "60": ""
+          }}
+          trackStyle={[
+            { backgroundColor: CARB_COLOR },
+            { backgroundColor: FAT_COLOR }
+          ]}
+          handleStyle={[{}, {}, { display: "none" }]}
+          railStyle={{ backgroundColor: PROTEIN_COLOR }}
         />
-      ))}
-    </MacroLabelsContainer>
-    <MacroRangeContainer>
-      <Range
-        value={getRangeArray(data)}
-        allowCross={false}
-        onChange={onMacroChange}
-        pushable
-        marks={{
-          "50": "",
-          "60": ""
-        }}
-        trackStyle={[
-          { backgroundColor: CARB_COLOR },
-          { backgroundColor: FAT_COLOR }
-        ]}
-        handleStyle={[{}, {}, { display: "none" }]}
-        railStyle={{ backgroundColor: PROTEIN_COLOR }}
-      />
-      <Typography variant="caption">
-        Adjust your macro ratio (protein 50%-60%)
-      </Typography>
-    </MacroRangeContainer>
-  </MacroContainer>
-);
+        <Typography variant="caption">
+          Adjust your macro ratio (protein 50%-60%)
+        </Typography>
+      </MacroRangeContainer>
+    </MacroContainer>
+  );
+};
 
 const formatKcalAdjustmentLabel = (kcalAdjustment: number) => {
   if (kcalAdjustment < 0) {
@@ -366,6 +374,19 @@ const MacroSettingsDialogue = ({
     </Dialog>
   );
 };
+
+class MacroChart extends React.Component<MacroChartProps, {}> {
+  shouldComponentUpdate(nextProps) {
+    return (
+      !isEqual(this.props.data, nextProps.data) ||
+      this.props.kcals !== nextProps.kcals
+    );
+  }
+
+  render() {
+    return <MacroChartBase {...this.props} />;
+  }
+}
 
 const SettingsButton = ({ onClick }) => (
   <IconButton
