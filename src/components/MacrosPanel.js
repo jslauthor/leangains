@@ -112,8 +112,8 @@ const FlexRow = styled.div`
 const FlexColumn = styled.div`
   display: flex;
   flex-direction: column;
-  * {
-    margin-bottom: 5px;
+  div {
+    margin-bottom: 10px;
   }
 `;
 
@@ -316,10 +316,18 @@ const MacroSettingsDialogue = ({
   trainingDayMultiplier,
   onTrainingDayMultiplierChange
 }) => {
+  const restDayMultiplierValue =
+    formatMultiplier(restDayMultiplier) === 0
+      ? ""
+      : formatMultiplier(restDayMultiplier);
+  const trainingDayMultiplierValue =
+    formatMultiplier(trainingDayMultiplier) === 0
+      ? ""
+      : formatMultiplier(trainingDayMultiplier);
   return (
     <Dialog open={open} onClose={onClose} aria-labelledby="form-dialog-title">
       <DialogTitle id="form-dialog-title">{title}</DialogTitle>
-      <DialogContent>
+      <DialogContent style={{ width: 200 }}>
         <FlexColumn>
           <TextField
             placeholder="Enter caloric deficit or surplus"
@@ -332,7 +340,7 @@ const MacroSettingsDialogue = ({
           />
           <TextField
             placeholder="Enter rest day kcal % change"
-            value={formatMultiplier(restDayMultiplier)}
+            value={restDayMultiplierValue}
             label="Rest Day Kcal % Change"
             type="number"
             onChange={event =>
@@ -341,7 +349,7 @@ const MacroSettingsDialogue = ({
           />
           <TextField
             placeholder="Enter training day kcal % change"
-            value={formatMultiplier(trainingDayMultiplier)}
+            value={trainingDayMultiplierValue}
             label="Training Day Kcal % Change"
             type="number"
             onChange={event =>
