@@ -25,6 +25,8 @@ import RadioGroup from "@material-ui/core/RadioGroup";
 import Paper from "@material-ui/core/Paper";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Divider from "@material-ui/core/Divider";
+import Tooltip from "@material-ui/core/Tooltip";
+import InfoIcon from "@material-ui/icons/Info";
 
 // import grey from "@material-ui/core/colors/grey";
 
@@ -419,12 +421,30 @@ class App extends React.Component<{}, AppState> {
                 <HeaderContainer>
                   <div>
                     {" "}
-                    <Typography variant="headline" gutterBottom>
-                      Leangains Calculator
-                    </Typography>
+                    <div>
+                      <Typography variant="headline">
+                        Leangains Calculator
+                      </Typography>
+                      <Tooltip title="This calculator uses the latest Crunching The Numbers algorithm from Martin Berkhan's Leangains book. Be advised that the caloric intake and macro ratios assume trainees eat TEF foods tracked using Atwater's standard. This app is unofficial and complimentary to those pursuing Martin's recommendations.">
+                        <Typography
+                          variant="subheading"
+                          style={{ width: "max-content" }}
+                        >
+                          about
+                          <InfoIcon
+                            color="action"
+                            style={{
+                              fontSize: 12,
+                              marginLeft: 5
+                            }}
+                          />
+                        </Typography>
+                      </Tooltip>
+                    </div>
                     <a
                       href="https://www.amazon.com/Leangains-Method-Researched-Practiced-Perfected-ebook/dp/B07G3GFLTX/ref=sr_1_1?ie=UTF8&qid=1535321695&sr=8-1&keywords=leangains?_encoding=UTF8&camp=1789&creative=9325&linkCode=ur2&tag=storypodca-20&linkId=2P4S6EY6B462X4AR"
                       target="_blank"
+                      style={{ marginTop: 10, display: "inline-block" }}
                     >
                       <img
                         src="https://images-na.ssl-images-amazon.com/images/G/01/associates/remote-buy-box/buy1.gif"

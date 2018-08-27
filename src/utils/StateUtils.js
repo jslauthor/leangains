@@ -153,7 +153,7 @@ export const getStateFromQuery: string => QueryState = (data: string) => {
   const muscleMassAttr = get(state, "muscleMassAttr", "NA");
   const age = get(state, "age", 0);
   const stepsPerDay = get(state, "stepsPerDay", 0);
-  const metric = get(state, "metric", true);
+  const metric = get(state, "metric", false);
 
   const base = [
     convertGendertoBase((gender: GenderType)),
